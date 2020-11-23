@@ -127,3 +127,12 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# do not check in our key file
+w251-fp-user.keys
+
+# do not check in s3 files, use `aws sync` commands instead
+s3/*
+
+# do not check in vscode files
+settings.json
