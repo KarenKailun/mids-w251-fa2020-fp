@@ -95,7 +95,7 @@ class BreathRateDetector(object):
 
     def draw_point(self, draw, w, h, key, idx1, idx2, fill=(51, 51, 204), offset=0):
         thickness = 5
-        if all(key[idx1]) and all(key[idx1][offset:]) and all(key[idx2]):
+        if (offset == 0 and all(key[idx1]) and all(key[idx2])) or (offset==1 and all(key[idx1][offset:]) and all(key[idx2])):
             draw.line([ round(key[idx1][2] * w), round(key[idx1][1] * h), round(key[idx2][2] * w), round(key[idx2][1] * h)],width = thickness, fill=fill)
 
     def draw_keypoints(self, img, key):
@@ -161,25 +161,34 @@ if __name__ == "__main__":
     elif args.camera_id:
         print('Using video device ID {}'.format(args.camera_id))
         cap = cv2.VideoCapture(int(args.camera_id))
+        cap.set(cv2.CAP_PROP_FPS, 10)
+        fps = 10 
     else:
         print('Reading from video file: {}'.format(args.video_file))
         cap = cv2.VideoCapture(args.video_file)
         fps = cap.get(cv2.CAP_PROP_FPS)
-        frame_delay = int(1000 / fps)
         print('Using frame_delay of {} ({} fps)'.format(frame_delay, fps))
 
+    frame_delay = int(1000 / fps)
     detector = BreathRateDetector()
 
     while(cap.isOpened()):
+        start_ms = time.time() * 1000
         ret, frame = cap.read()
 
-        points = detector.execute(frame)
-        print(points)
-        if len(points) > 0:
-            frame = detector.draw_keypoints(frame, points)
+        if frame is not None:
+            points = detector.execute(frame)
+            print(points)
+            if len(points) > 0:
+                frame = detector.draw_keypoints(frame, points)
 
-        cv2.imshow('frame',frame)
-        if cv2.waitKey(frame_delay) & 0xFF == ord('q'):
+            cv2.imshow('frame',frame)
+            ellapsed = (time.time() * 1000) - start_ms
+            print('el: {} st: {}'.format(ellapsed, start_ms))
+            wait_ms = max(frame_delay - int(ellapsed), 1)
+            if cv2.waitKey(wait_ms) & 0xFF == ord('q'):
+                break
+        else:
             break
 
     cap.release()
