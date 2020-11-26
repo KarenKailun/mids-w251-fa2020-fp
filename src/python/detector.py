@@ -4,6 +4,7 @@ import argparse
 import cv2
 import json
 import numpy as np
+import pandas as pd
 import os
 import PIL.Image, PIL.ImageDraw, PIL.ImageFont
 import time
@@ -13,6 +14,7 @@ import torchvision.transforms as transforms
 import trt_pose.coco
 import trt_pose.models
 
+from collections import deque
 from torch2trt import TRTModule
 from trt_pose.draw_objects import DrawObjects
 from trt_pose.parse_objects import ParseObjects
@@ -145,6 +147,27 @@ class BreathRateDetector(object):
         cv2img = cv2.cvtColor(cv2img, cv2.COLOR_BGR2RGB)
         return cv2img
 
+    def rate_from_keypoints(self, keypoints):
+        rshoulder_y_series = [x[6][1] for x in keypoints]
+        lshoulder_y_series = [x[5][1] for x in keypoints]
+
+        frame_count = len(keypoints)
+
+        sum_series = []
+        for i in range(frame_count):
+            cur = np.nan
+            if rshoulder_y_series[i] is not None and lshoulder_y_series[i] is not None:
+                cur = rshoulder_y_series[i] + lshoulder_y_series[i]
+            sum_series.append(cur)
+        interp_series = pd.Series(sum_series).interpolate().tolist()
+        tr = np.absolute(np.fft.fft(interp_series))
+        cycles_in_period = 1+np.argmax(tr[1:30])
+
+        brpm = cycles_in_period * (600. / frame_count)
+
+        return brpm
+          
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Detect breath rate from the camera or a video source.')
     parser.add_argument('-c', '--camera_id', metavar='CAMERA-ID', type=str, help='The numeric id of the video capture device.', default=None)
@@ -153,6 +176,8 @@ if __name__ == "__main__":
 
     cap = None
     frame_delay = 1
+    target_fps = 10
+    skip_frames = 0
 
     if args.camera_id and args.video_file:
         parser.error('Only supply one of CAMERA-ID or VIDEO-FILE.')
@@ -161,35 +186,57 @@ if __name__ == "__main__":
     elif args.camera_id:
         print('Using video device ID {}'.format(args.camera_id))
         cap = cv2.VideoCapture(int(args.camera_id))
-        cap.set(cv2.CAP_PROP_FPS, 10)
-        fps = 10 
+        cap.set(cv2.CAP_PROP_FPS, target_fps)
+        fps = target_fps
     else:
         print('Reading from video file: {}'.format(args.video_file))
         cap = cv2.VideoCapture(args.video_file)
-        fps = cap.get(cv2.CAP_PROP_FPS)
-        print('Using frame_delay of {} ({} fps)'.format(frame_delay, fps))
-
+        fps = round(cap.get(cv2.CAP_PROP_FPS))
+        skip_frames = int(fps / target_fps) - 1
+    
     frame_delay = int(1000 / fps)
+    print('Using frame_delay of {} ({} fps), skipping {}'.format(frame_delay, fps, skip_frames))
+
     detector = BreathRateDetector()
 
+    cur_skip = 0
+    point_buffer = deque([])
+    pb_start = time.time()
+    pb_frames = 0
+
+    start_ms = time.time() * 1000
     while(cap.isOpened()):
-        start_ms = time.time() * 1000
         ret, frame = cap.read()
+        pb_frames = pb_frames + 1
+
+        if (skip_frames > 0):
+            if cur_skip != skip_frames:
+                cur_skip = cur_skip + 1
+                continue
+            else:
+                cur_skip = 0
 
         if frame is not None:
             points = detector.execute(frame)
-            print(points)
             if len(points) > 0:
                 frame = detector.draw_keypoints(frame, points)
+            point_buffer.append(points)
 
             cv2.imshow('frame',frame)
-            ellapsed = (time.time() * 1000) - start_ms
-            print('el: {} st: {}'.format(ellapsed, start_ms))
+            now = time.time() * 1000
+            ellapsed = now - start_ms
+            start_ms = now
             wait_ms = max(frame_delay - int(ellapsed), 1)
             if cv2.waitKey(wait_ms) & 0xFF == ord('q'):
                 break
         else:
             break
+    pb_end = time.time()
+    pb_sec = pb_end - pb_start
+    print('Read {} frames in {} seconds ({} fps)'.format(pb_frames, pb_sec, pb_frames/pb_sec))
 
     cap.release()
     cv2.destroyAllWindows()
+
+    rate = detector.rate_from_keypoints(point_buffer)
+    print('rate: {}'.format(rate))
