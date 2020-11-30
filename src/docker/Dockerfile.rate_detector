@@ -90,3 +90,7 @@ RUN cd ~/opencv-4.4.0/build && \
         -D BUILD_EXAMPLES=ON .. && \
     make -j6 && \
     make install
+
+RUN pip3 install flask
+
+CMD python3 -m repo.src.python.flask.detector_app

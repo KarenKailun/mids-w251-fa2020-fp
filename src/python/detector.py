@@ -184,7 +184,7 @@ if __name__ == "__main__":
     elif not args.camera_id and not args.video_file:
         parser.error('Must supply either CAMERA-ID or VIDEO-FILE.')
     elif args.camera_id:
-        print('Using video device ID {}'.format(args.camera_id))
+        print('Using video device ID {}'.format(int(args.camera_id)))
         cap = cv2.VideoCapture(int(args.camera_id))
         cap.set(cv2.CAP_PROP_FPS, target_fps)
         fps = target_fps
