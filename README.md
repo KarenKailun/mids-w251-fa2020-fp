@@ -25,11 +25,9 @@ Inline drawings not supported: look for ">>>>>  gd2md-html alert:  inline drawin
 
 ----->
 
-Deep Breath: Contactless respiratory rate detection from video
-
-Justin Trobec, Yekun Wang, Karen Wong
-
-W251-001 | Fall 2020
+<h1 align="center">Deep Breath: Contactless respiratory rate detection from video</h1>
+<h3 align="center">Justin Trobec, Yekun Wang, Karen Wong</h3>
+<h5 align="center">W251-001 | Fall 2020</h5>
 
 [Presentation](https://github.com/jtrobec/mids-w251-fa2020-fp/blob/main/Breath%20Rate%20Diagrams.pdf)
 
@@ -57,8 +55,9 @@ _Pipeline_
 
 Describe the whole pipeline -- patient’s edge device to cloud to provider. Include description of web UI. 
 
-![High-level Architecture Diagram](media/pipeline.png "Proposed Architecture")
-
+<p align="center">
+   <img alt="High-level Architecture Diagram" src="media/pipeline.png" />
+</p>
 
 _Training data_
 
@@ -76,7 +75,9 @@ _Respiratory rate detection model_
 
 The main respiratory rate detection model was an ensemble of fast Fourier transform frequency estimation with a CNN. The input to the model were the values over time of selected upper body keypoints and distances. The fast Fourier transformation was applied to each feature to estimate its frequency along the time dimension, which effectively produced a vector of length 12. The input to the CNN has the shape of [440 x 12 x 1], for a 15-second long clip recorded at 30 fps. For the CNN, we used filters the width of the input data and approximately 1 second long. The output from the CNN model was flatten and resulted in a vector of length 3296. Subsequently, the CNN output and fast Fourier output were concatenated into a vector of length 3308. This vector was then treated as the input vector to a feedforward neural network, which consisted of two fully connected layers and a dropout layer. Finally, the network outputs a single numeric prediction for the breathing rate of the input video clip. See 
 
-![Model Ensemble Diagram](media/ensemble.png "Model Ensemble")
+<p align="center">
+   <img alt="Model Ensemble Diagram" src="media/ensemble.png" />
+</p>
 
 We chose MSE (mean squared error) as the loss function was mean squared error and Adam optimizer. Training occurred on an edge device (NVIDIA Jetson Xavier NX or AGX Xavier). 
 
@@ -143,8 +144,9 @@ The best performing model was the ensemble of fast Fourier transform with a CNN.
 
 Overall, predictions for each 15-second clip correlated well with the true respiratory rate, although there was some variability between multiple clips from the same longer video. 
 
-![Model Accuracy Plot](media/accuracy.png "Model Accuracy")
-
+<p align="center">
+   <img src="media/accuracy.png" alt="Model Accuracy Plot" />
+</p>
 
 _Future Work_
 
