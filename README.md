@@ -53,7 +53,11 @@ Our model uses front-facing, upper body video of a person to mimic a telemedicin
 
 _Pipeline_
 
-Describe the whole pipeline -- patient’s edge device to cloud to provider. Include description of web UI. 
+In order to demonstrate how this approach might be applied in a clinical setting, we designed a pipeline involving a web-application to be used at point-of-care (remotely), a cloud-based backend, and a second web-application to be used by care providers. The point-of-care web-application runs on an NVIDIA Xavier NX, and displays a video stream from a USB web-cam. When a user clicks a start button, the server on the NX will begin running pose detection on incoming frames, and accumulating these until a buffer of keypoints is filled. This buffer is then run through the model ensemble (discussed in a section below), and a breathing rate is predicted.
+
+These predictions are uploaded to an MQTT broker running in AWS, with an opaque identifier. We do not transmit personally identifying information (PII) about the user. An MQTT subscriber reads the incoming messages and then stores them in a DynamoDB table. These tables are queried when the care provider goes to look at breath rates via the cloud web UI, hosted in AWS.
+
+This design keeps the load of inference on edge devices, and aggregates data in a scalable way in the cloud. DynamoDB is a NoSQL style key-value store that can scale out as needed (i.e. as more patients use the edge device to transmit breath rates to providers).
 
 <p align="center">
    <img alt="High-level Architecture Diagram" src="media/pipeline.png" />
