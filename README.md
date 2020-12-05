@@ -25,17 +25,6 @@ Inline drawings not supported: look for ">>>>>  gd2md-html alert:  inline drawin
 
 ----->
 
-
-<p style="color: red; font-weight: bold">>>>>>  gd2md-html alert:  ERRORs: 0; WARNINGs: 1; ALERTS: 3.</p>
-<ul style="color: red; font-weight: bold"><li>See top comment block for details on ERRORs and WARNINGs. <li>In the converted Markdown or HTML, search for inline alerts that start with >>>>>  gd2md-html alert:  for specific instances that need correction.</ul>
-
-<p style="color: red; font-weight: bold">Links to alert messages:</p><a href="#gdcalert1">alert1</a>
-<a href="#gdcalert2">alert2</a>
-<a href="#gdcalert3">alert3</a>
-
-<p style="color: red; font-weight: bold">>>>>> PLEASE check and correct alert issues and delete this message and the inline alerts.<hr></p>
-
-
 Deep Breath: Contactless respiratory rate detection from video
 
 Justin Trobec, Yekun Wang, Karen Wong
@@ -47,8 +36,6 @@ W251-001 | Fall 2020
 **Abstract**
 
 In this paper, we present a method for estimating patient respiratory rate from a contactless, video-based recording, which captures the patient’s breathing pattern in the upright position. Such technology can potentially greatly improve the efficiency for monitoring patients’ vitals, at the same time reducing the risks for unwarranted infectious exposure of the healthcare provider. In a clinical setting, the healthcare provider can monitor the patients’ breathing pattern from a hand-held tablet. 
-
- 
 
 In order to estimate the patient’s respiratory rate, our current methodology utilizes pose detection to infer keypoints on the patient’s body and track their movements through time. Eight keypoint features and three derived distances features serve as inputs to an ensemble model, which combines both a CNN and a frequency estimation via fast Fourier transformation. The output from the model is a numeric value for estimated respiratory rate. Our best model produced the validation MAE of 5.49.
 
@@ -70,12 +57,7 @@ _Pipeline_
 
 Describe the whole pipeline -- patient’s edge device to cloud to provider. Include description of web UI. 
 
-
-
-<p id="gdcalert1" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image1.png). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert2">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
-
-
-![alt_text](images/image1.png "image_tooltip")
+![High-level Architecture Diagram](media/pipeline.png "Proposed Architecture")
 
 
 _Training data_
@@ -94,12 +76,7 @@ _Respiratory rate detection model_
 
 The main respiratory rate detection model was an ensemble of fast Fourier transform frequency estimation with a CNN. The input to the model were the values over time of selected upper body keypoints and distances. The fast Fourier transformation was applied to each feature to estimate its frequency along the time dimension, which effectively produced a vector of length 12. The input to the CNN has the shape of [440 x 12 x 1], for a 15-second long clip recorded at 30 fps. For the CNN, we used filters the width of the input data and approximately 1 second long. The output from the CNN model was flatten and resulted in a vector of length 3296. Subsequently, the CNN output and fast Fourier output were concatenated into a vector of length 3308. This vector was then treated as the input vector to a feedforward neural network, which consisted of two fully connected layers and a dropout layer. Finally, the network outputs a single numeric prediction for the breathing rate of the input video clip. See 
 
-
-
-<p id="gdcalert2" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline drawings not supported directly from Docs. You may want to copy the inline drawing to a standalone drawing and export by reference. See <a href="https://github.com/evbacher/gd2md-html/wiki/Google-Drawings-by-reference">Google Drawings by reference</a> for details. The img URL below is a placeholder. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert3">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
-
-
-![drawing](https://docs.google.com/drawings/d/12345/export/png)
+![Model Ensemble Diagram](media/ensemble.png "Model Ensemble")
 
 We chose MSE (mean squared error) as the loss function was mean squared error and Adam optimizer. Training occurred on an edge device (NVIDIA Jetson Xavier NX or AGX Xavier). 
 
@@ -166,12 +143,7 @@ The best performing model was the ensemble of fast Fourier transform with a CNN.
 
 Overall, predictions for each 15-second clip correlated well with the true respiratory rate, although there was some variability between multiple clips from the same longer video. 
 
-
-
-<p id="gdcalert3" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/image2.png). Store image on your image server and adjust path/filename/extension if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert4">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
-
-
-![alt_text](images/image2.png "image_tooltip")
+![Model Accuracy Plot](media/accuracy.png "Model Accuracy")
 
 
 _Future Work_
